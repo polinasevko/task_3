@@ -1,5 +1,4 @@
 from argparser import cli_parser
-
 from db import Database
 from format_factory import FormatFactory
 
@@ -57,7 +56,7 @@ def insert_data(db, rooms, students):
         values = tuple(stud.values())
         db.execute_query(insert_stud_query, *values)
 
-    db.commit()
+    db.save()
 
 
 def create_index(db):
@@ -66,7 +65,7 @@ def create_index(db):
     db.execute_query("ALTER TABLE student ADD COLUMN age INT;")
     db.execute_query("UPDATE student SET age = timestampdiff(YEAR, birthday, now());")
     db.execute_query("ALTER TABLE student ADD INDEX age_room_index(age, room_id);")
-    db.commit()
+    db.save()
 
 
 def data_selection(db):
@@ -118,17 +117,17 @@ def main():
     factory = FormatFactory()
 
     # CLI parser
-    database_file, students_file, rooms_file, dump_format = cli_parser()
+    dbms_name, database_info, students_file, rooms_file, dump_format = cli_parser()
+
 
     # load source dicts
     format_to_load = 'json'
     serializer_json = factory.get_format(format_to_load)
     students = serializer_json.load(students_file)
     rooms = serializer_json.load(rooms_file)
-    database_info = serializer_json.load(database_file)
 
-    # working with database
-    db = Database(**database_info)
+    # interaction with database
+    db = Database(dbms_name, **database_info)
 
     create_tables(db)
     insert_data(db, rooms, students)
